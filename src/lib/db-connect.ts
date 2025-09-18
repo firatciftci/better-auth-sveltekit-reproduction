@@ -1,34 +1,19 @@
-/* eslint-disable ts/strict-boolean-expressions */
-/* eslint-disable vars-on-top */
-/* eslint-disable ts/no-explicit-any */
-/* eslint-disable ts/no-unsafe-return */
-/* eslint-disable ts/no-unsafe-member-access */
-/* eslint-disable ts/no-unsafe-assignment */
 import { MONGO_URL } from "$env/static/private";
-import mongoose from "mongoose";
+import { MongoClient } from "mongodb";
 
-declare global {
-  var mongoose: any; // This must be a `var` and not a `let / const`
+const client = new MongoClient(MONGO_URL);
+
+// connect to the database
+export async function connect(): Promise<void> {
+  await client.connect();
 }
 
-let cached = globalThis.mongoose;
-cached ??= globalThis.mongoose = { conn: null, promise: null };
-
-async function dbConnect() {
-  if (cached.conn) {
-    return cached.conn;
-  }
-  cached.promise ??= mongoose.connect(MONGO_URL).then((mongoose) => {
-    return mongoose;
-  });
-  try {
-    cached.conn = await cached.promise;
-  } catch (error) {
-    cached.promise = null;
-    throw error;
-  }
-
-  return cached.conn;
+// disconnect from the database
+export async function disconnect(): Promise<void> {
+  await client.close();
 }
 
-export default dbConnect;
+// get the database
+export function getDB(): any {
+  return client.db();
+}
